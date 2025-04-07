@@ -1,9 +1,12 @@
-package com.example.air_quality;
+package com.example.air_quality.consumer;
 
 import com.example.air_quality.entity.AirQualityData;
 import com.example.air_quality.repository.AirQualityDataRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -12,17 +15,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Component
+@RequiredArgsConstructor
 public class AirQualityConsumer {
     private final ObjectMapper objectMapper;
-    private final AirQualityDataRepository repository;
-
-    public AirQualityConsumer(AirQualityDataRepository repository) {
-        this.repository = repository;
-        this.objectMapper = new ObjectMapper();
-    }
+    private final AirQualityDataRepository airQualityDataRepository;
 
     @KafkaListener(topics = "air-quality-topic", groupId = "air-quality-group")
-    public void listen(String message) {
+    public ResponseEntity<String> listen(String message) {
         try {
             JsonNode root = objectMapper.readTree(message);
             JsonNode components = root.get("list").get(0).get("components");
@@ -39,10 +38,21 @@ public class AirQualityConsumer {
             long dt = root.get("list").get(0).get("dt").asLong();
             data.setTimestamp(LocalDateTime.ofInstant(Instant.ofEpochSecond(dt), ZoneId.systemDefault()));
 
-            repository.save(data);
+            if (data.getPm25() != null && data.getPm25() > 50 ||
+                    data.getPm10() != null && data.getPm10() > 80 ||
+                    data.getNo2() != null && data.getNo2() > 100 ||
+                    data.getO3() != null && data.getO3() > 120 ||
+                    data.getSo2() != null && data.getSo2() > 75) {
+                data.setAnomaly(true);
+            } else {
+                data.setAnomaly(false);
+            }
+
+            airQualityDataRepository.save(data);
 
         } catch (Exception e) {
-            e.printStackTrace();
-        }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Veri işleme sırasında bir hata oluştu: " + e.getMessage());        }
+        return null;
     }
 }

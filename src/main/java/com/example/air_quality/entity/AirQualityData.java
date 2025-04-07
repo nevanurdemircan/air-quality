@@ -24,4 +24,6 @@ public class AirQualityData {
     private Double so2;
     private Double o3;
     private LocalDateTime timestamp;
+    private Boolean anomaly;
+    private String anomalyReason;
 }
