@@ -5,15 +5,18 @@ import com.example.air_quality.entity.AirQualityData;
 import com.example.air_quality.repository.AirQualityDataRepository;
 import com.example.air_quality.service.AirQualityDataService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/air-quality")
@@ -39,7 +42,14 @@ public class AirQualityDataController {
     }
 
     @PostMapping("/date")
-    public ResponseEntity<List<AirQualityData>> getByDateRange(@RequestBody LocalDateTime start, @RequestBody LocalDateTime end) {
-        return ResponseEntity.ok(airQualityDataService.getByDateRange(start, end));
+    public ResponseEntity<List<AirQualityData>> getByDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+
+        List<AirQualityData> filteredData = airQualityDataService.getAllData().stream()
+                .filter(data -> !data.getTimestamp().isBefore(start) && !data.getTimestamp().isAfter(end))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredData);
     }
 }
