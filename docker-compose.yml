@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: air-quality-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 31.10.01Nd
+      POSTGRES_DB: air_quality
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./sql/init-data.sql:/docker-entrypoint-initdb.d/init-data.sql
+    networks:
+      - app-network
+
+
+  # 2) Zookeeper
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: air-quality-zookeeper
+    platform: linux/amd64
+    ports:
+      - "2181:2181"
+    networks:
+      - app-network
+
+  # 3) Kafka
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: air-quality-kafka
+    platform: linux/amd64
+    depends_on:
+      - zookeeper
+    environment:
+      # Kafka hem container içinden hem de diğer konteynerlerden erişilebilir olmalı
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    ports:
+      - "9092:9092"
+    networks:
+      - app-network
+
+  # 4) Spring Boot Backend
+  backend:
+    build:
+      context: ./air-quality
+    container_name: air-quality-backend
+    depends_on:
+      - db
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/air_quality
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 31.10.01Nd
+      OPENWEATHERMAP_API_KEY: 1d16d0705a71d96f18248d60c78d318a
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
+  # 5) React Frontend
+  frontend:
+    build:
+      context: ./air-quality-fe
+    container_name: air-quality-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
+
+# Kalıcı veri için volume
+volumes:
+  db-data:
+
+# Servisler arası iletişim ağı
+networks:
+  app-network:
+    driver: bridge
