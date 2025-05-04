@@ -1,134 +1,104 @@
-#  Air Quality Backend Project
+# Air Quality Monitoring System
 
-##  Projenin Amacı ve Kapsamı
+Bu proje, OpenWeatherMap API’den hava kalitesi verilerini çekip Kafka’ya gönderen, PostgreSQL veritabanında saklayan ve REST API üzerinden erişim sağlayan bir hava kalitesi izleme sistemidir.
 
-Bu proje, hava kalitesi sensörlerinden gelen verilerin toplanması, işlenmesi ve saklanmasını sağlayan bir backend servisidir. Kafka entegrasyonu ile gelen yüksek hacimli veriler hem gerçek zamanlı hem de geçmişe dönük analiz için kullanılabilir hâle getirilir.
+## Projenin Amacı ve Kapsamı
 
-### Kapsam:
-- Kafka ile hava kalitesi verilerinin alınması
-- Anomali tespiti ve raporlama
-- Lokasyon bazlı hava kalitesi sorgulama
-- En kirli bölgelerin listelenmesi
-- Manuel veri girişi imkânı
-- API üzerinden veri erişimi ve yönetimi
+- OpenWeatherMap API’den hava kalitesi verilerini almak
+- Kafka ile veri akışı sağlamak
+- PostgreSQL üzerinde verileri saklamak
+- Anomali tespiti ve sorgulama endpointleri sunmak
+- REST API ile hava kalitesi verilerini kullanıcılara sunmak
 
-## Sistem Mimarisi ve Komponentlerin Açıklaması
+##  Sistem Mimarisi ve Komponentler
 
-### Komponentler:
-- **Kafka Producer** → Hava kalitesi ölçüm cihazlarından veri gönderir.
-- **Kafka Broker** → Mesajları tutar ve tüketicilere dağıtır.
-- **Backend Service** → Kafka’dan mesaj alır, işler, veritabanına kaydeder.
-- **Database** → Ölçüm ve anomali verilerini saklar.
-- **REST API** → Son kullanıcı ve diğer sistemler için erişim sağlar.
+- **Spring Boot Uygulaması:** API servislerini ve iş mantığını barındırır.
+- **PostgreSQL:** Hava kalitesi verilerini saklamak için kullanılır.
+- **Kafka:** Veri akışını sağlamak ve ölçeklenebilirliği artırmak için kullanılır.
+- **OpenWeatherMap API:** Hava kalitesi verilerini almak için dış API kaynağı.
+- **Docker Compose :** PostgreSQL ve Kafka’yı yerel ortamda ayağa kaldırmak için kullanıldı.
 
-## ⚙️ Teknoloji Seçimleri ve Gerekçeleri
+## Teknoloji Seçimleri ve Gerekçeleri
 
-- **Spring Boot** → Hızlı geliştirme, güçlü Kafka ve REST desteği
-- **Apache Kafka** → Gerçek zamanlı mesaj kuyruğu
-- **PostgreSQL** → Güvenilir ve ölçeklenebilir veri depolama
-- **Lombok** → Daha temiz ve az boilerplate kod
-- **Docker** → Kolay kurulum ve dağıtım
+- **Spring Boot:** Hızlı geliştirme ve geniş ekosistem.
+- **PostgreSQL:** Güvenilir, açık kaynaklı ilişkisel veritabanı.
+- **Kafka:** Gerçek zamanlı veri akışı ve mesajlaşma altyapısı.
+- **OpenWeatherMap API:** Güvenilir hava kalitesi verisi sağlayıcısı.
+- **Lombok:** Kod tekrarını azaltmak için.
 
-## 🚀 Kurulum Adımları
+## Kurulum Adımları
 
-1. **Proje klonla**
-   ```bash
-   git clone https://github.com/nevademircan/air-quality-backend.git
-   cd air-quality-backend
-   ```
-
-2. **Kafka ve Zookeeper başlat**
-   ```bash
-   docker-compose up -d kafka zookeeper
-   ```
-
-3. **Veritabanı hazırla**
-    - PostgreSQL veya MongoDB kur.
-    - Database ve user oluştur:
+1. **PostgreSQL Kurulumu**
+    - PostgreSQL yükleyin → [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
+    - Yeni veritabanı oluşturun:
       ```sql
       CREATE DATABASE air_quality;
       ```
+    - Kullanıcı adı ve şifreyi `application.properties` dosyasına uygun şekilde ayarlayın.
 
-4. **Config ayarlarını yap**
-   `src/main/resources/application.yml` içinde:
-    - Kafka broker URL
-    - Veritabanı bağlantısı
+2. **Kafka Kurulumu**
+    - Kafka yükleyin → [https://kafka.apache.org/quickstart](https://kafka.apache.org/quickstart)
+    - Kafka’yı başlatın:
+      ```bash
+      bin/zookeeper-server-start.sh config/zookeeper.properties
+      bin/kafka-server-start.sh config/server.properties
+      ```
 
-5. **Bağımlılıkları yükle**
-   ```bash
-   ./mvnw clean install
-   ```
+3. **Proje Bağımlılıkları**
+    - IntelliJ veya başka bir IDE ile projeyi açın.
+    - Maven bağımlılıklarını yükleyin:
+      ```bash
+      mvn clean install
+      ```
 
-6. **Uygulamayı çalıştır**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+4. **Uygulamayı Çalıştırma**
+    - IntelliJ’den `main` sınıfını başlatın.
+    - Ya da terminalden:
+      ```bash
+      mvn spring-boot:run
+      ```
 
-## 📖 Kullanım Rehberi
+### API Endpoint’leri
 
-- Kafka’dan veri almak için:
-  POST /api/air-quality/fetch
+| Endpoint                           | Açıklama                                    |
+|-------------------------------------|--------------------------------------------|
+| POST `/api/air-quality/fetch`      | OpenWeatherMap’ten veri çekip Kafka’ya gönderir. |
+| GET `/api/air-quality/getAll`      | Tüm hava kalitesi verilerini getirir.       |
+| GET `/api/air-quality/anomalies-by-date?start={date}&end={date}` | Tarih aralığındaki anomalileri getirir. |
+| GET `/api/air-quality/location?latitude={lat}&longitude={lon}`  | Belirli konumdaki verileri getirir.     |
+| GET `/api/air-quality/pollution-density`  | En yoğun kirlenme olan bölgeleri getirir. |
+| POST `/api/air-quality/manual-input` | Manuel hava kalitesi verisi ekler.        |
+| GET `/api/air-quality/last-anomaly` | Son anomali verisini getirir.             |
 
-- Manuel veri girişi yapmak için:
-  POST /api/air-quality/manual-input
-
-- Tüm verileri listelemek için:
-  GET /api/air-quality/getAll
-
-- Tarih aralığında anomalileri getirmek için:
-  GET /api/air-quality/anomalies-by-date?start=2025-04-28T00:00:00&end=2025-04-29T23:59:59
-
-- Lokasyona göre veri almak için:
-  GET /api/air-quality/location?latitude=41.0&longitude=29.0
-
-- En kirli bölgeleri listelemek için:
-  GET /api/air-quality/pollution-density
-
-- Son anomaliyi görmek için:
-  GET /api/air-quality/last-anomaly
-
-Swagger dokümantasyonu:
-http://localhost:8080/swagger-ui/index.html
-
-## 📑 API Dokümantasyonu
-
-| Yöntem | Endpoint                            | Açıklama                                      |
-|--------|-------------------------------------|---------------------------------------------|
-| POST   | `/api/air-quality/fetch`           | Sensörden veri çek ve Kafka’ya gönder       |
-| GET    | `/api/air-quality/getAll`          | Tüm hava kalitesi verilerini getir         |
-| GET    | `/api/air-quality/anomalies-by-date` | Tarih aralığındaki anomalileri getir      |
-| GET    | `/api/air-quality/location`        | Lokasyona göre hava kalitesi verisi getir  |
-| GET    | `/api/air-quality/pollution-density` | En kirli bölgeleri listele                 |
-| POST   | `/api/air-quality/manual-input`    | Manuel veri kaydı                          |
-| GET    | `/api/air-quality/last-anomaly`    | Son anomaliyi getir                        |
-
-## 💻 Script’lerin Kullanımı ve Parametreleri
-
-**Örnek Kafka Producer script**
-```bash
-./scripts/send-test-data.sh --topic air-quality --broker localhost:9092 --file data.json
+### Örnek Tarih Formatı
+```
+2025-04-29T15:30:00
 ```
 
-**Parametreler:**
-- `--topic`: Kafka topic adı
-- `--broker`: Kafka broker adresi
-- `--file`: JSON veri dosyası
+- OpenWeatherMap API anahtarı:
+  ```properties
+  openweathermap.api.key=1d16d0705a71d96f18248d60c78d318a
+  ```
+- Kafka konfigürasyonu:
+  ```properties
+  spring.kafka.bootstrap-servers=kafka:9092
+  ```
+- Veritabanı konfigürasyonu:
+  ```properties
+  spring.datasource.url=jdbc:postgresql://air-quality-db:5432/air_quality
+  spring.datasource.username=postgres
+  spring.datasource.password=31.10.01Nd
+  ```
 
-## 🛠️ Sorun Giderme Rehberi
+## Sorun Giderme (Troubleshooting) Rehberi
 
-| Sorun                              | Çözüm                                                    |
-|-------------------------------------|---------------------------------------------------------|
-| Kafka bağlantı hatası               | Kafka ve Zookeeper’ın çalıştığını kontrol edin.         |
-| DB bağlantı hatası                  | DB URL, username, password ve port ayarlarını doğrulayın. |
-| API 404 hatası                     | Endpoint ve port doğru mu bakın, örneğin `8080`.       |
-| Mesajlar tüketilmiyor               | Topic ve consumer group ayarlarını gözden geçirin.      |
-| Uygulama başlamıyor (`mvn` hatası) | Java 17+ ve Maven versiyonunu kontrol edin.            |
+| Sorun                                      | Çözüm                                                          |
+|-------------------------------------------|---------------------------------------------------------------|
+| PostgreSQL bağlantı hatası                 | DB’nin çalıştığından ve `url/username/password` bilgilerinin doğru olduğundan emin olun. |
+| Kafka bağlantı hatası                      | Kafka servislerinin çalışır durumda olduğundan emin olun.    |
+| OpenWeatherMap API erişim hatası           | API key’in geçerli olduğunu ve API limitini aşmadığınızı kontrol edin. |
+| `application.properties` değişikliklerinin uygulanmaması | Uygulamayı yeniden başlatmayı unutmayın.                     |
+| Maven bağımlılık hataları                  | `mvn clean install` çalıştırın.                             |
 
-## 📃 Lisans
+---
 
-MIT License
-
-## ✨ Katkı Sağlayanlar
-
-- [Senin İsmin](https://github.com/kullaniciAdi)
-- [Takım arkadaşların]
