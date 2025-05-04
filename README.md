@@ -28,15 +28,20 @@ Bu proje, OpenWeatherMap API’den hava kalitesi verilerini çekip Kafka’ya g�
 
 ## Kurulum Adımları
 
-1. **PostgreSQL Kurulumu**
-    - PostgreSQL yükleyin → [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
-    - Yeni veritabanı oluşturun:
-      ```sql
-      CREATE DATABASE air_quality;
-      ```
-    - Kullanıcı adı ve şifreyi `application.properties` dosyasına uygun şekilde ayarlayın.
+1. **Proje klonla**
+   ```bash
+   git clone https://github.com/nevanurdemircan/air-quality.git
+   cd air-quality
+   
+2. **PostgreSQL Kurulumu**
+       - PostgreSQL yükleyin → [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
+       - Yeni veritabanı oluşturun:
+         ```sql
+         CREATE DATABASE air_quality;
+         ```
+       - Kullanıcı adı ve şifreyi `application.properties` dosyasına uygun şekilde ayarlayın.
 
-2. **Kafka Kurulumu**
+3. **Kafka Kurulumu**
     - Kafka yükleyin → [https://kafka.apache.org/quickstart](https://kafka.apache.org/quickstart)
     - Kafka’yı başlatın:
       ```bash
@@ -44,14 +49,14 @@ Bu proje, OpenWeatherMap API’den hava kalitesi verilerini çekip Kafka’ya g�
       bin/kafka-server-start.sh config/server.properties
       ```
 
-3. **Proje Bağımlılıkları**
+4. **Proje Bağımlılıkları**
     - IntelliJ veya başka bir IDE ile projeyi açın.
     - Maven bağımlılıklarını yükleyin:
       ```bash
       mvn clean install
       ```
 
-4. **Uygulamayı Çalıştırma**
+5. **Uygulamayı Çalıştırma**
     - IntelliJ’den `main` sınıfını başlatın.
     - Ya da terminalden:
       ```bash
