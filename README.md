@@ -90,7 +90,7 @@ Bu proje, OpenWeatherMap API’den hava kalitesi verilerini çekip Kafka’ya g�
   spring.datasource.password=31.10.01Nd
   ```
 
-## Sorun Giderme (Troubleshooting) Rehberi
+## Sorun Giderme Rehberi
 
 | Sorun                                      | Çözüm                                                          |
 |-------------------------------------------|---------------------------------------------------------------|
